@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Person </title>
 </head>
 <body>
-$END$
+<p th:text="${persons.name}">VALUE</p>
+<p th:text="${persons.age}">VALUE</p>
+<p th:text="${persons.email}">VALUE</p>
+<a th:href="@{/admin/edit(id=${persons.id})}">Edit</a>
+<form th:method="POST" th:action="@{/admin/delet}">
+    <input type="hidden" name="id" th:value="${persons.id}"/>
+    <input type="submit" value="Delete"/>
+</form>
 </body>
 </html>
