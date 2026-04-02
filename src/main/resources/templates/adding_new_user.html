@@ -1,20 +1,49 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>New person</title>
+    <meta charset="UTF-8" />
+    <title>Добавить пользователя</title>
 </head>
-<form th:method="POST" th:action="@{/admin}" th:object="${persons}">
-    <label for="Name">Name : </label>
-    <input type="text" th:field="*{name}" id="name"/>
-    <br/>
-    <label for="Age">Age : </label>
-    <input type="text" th:field="*{age}" id="age"/>
-    <br/>
-    <label for="Email">Email : </label>
-    <input type="text" th:field="*{email}" id="email"/>
-    <br/>
-    <input type="submit" value="Create!"/>
+<body>
+
+<div>
+    Вы залогинены как <b th:text="${#httpServletRequest.remoteUser}"></b>
+    <form th:action="@{/logout}" method="post" style="display:inline;">
+        <button type="submit">Выйти</button>
+    </form>
+</div>
+
+<h1>Введите данные нового пользователя:</h1>
+
+<form th:action="@{/admin}" th:object="${user}" method="post">
+
+    <p>
+        Введите логин:
+        <input type="text" th:field="*{username}" required />
+    </p>
+
+    <p>
+        Введите пароль:
+        <input type="password" th:field="*{password}" required />
+    </p>
+
+    <p>
+        Введите email:
+        <input type="email" th:field="*{email}" required />
+    </p>
+
+    <p>
+        Роли:
+        <label><input type="checkbox" name="roles" th:value="${1}"/> ADMIN</label>
+        <label><input type="checkbox" name="roles" th:value="${2}"/> USER</label>
+    </p>
+
+    <button type="submit">Создать</button>
 </form>
+
+<br>
+
+<a th:href="@{/admin}">Отмена</a>
+
 </body>
 </html>
