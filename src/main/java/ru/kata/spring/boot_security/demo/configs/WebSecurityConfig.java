@@ -7,15 +7,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import ru.kata.spring.boot_security.demo.servis.UserServiceImpl;
+import ru.kata.spring.boot_security.demo.servis.UserService;
+
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final SuccessUserHandler successUserHandler;
-    private final UserServiceImpl userService;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
-    public WebSecurityConfig(UserServiceImpl userService,
+    public WebSecurityConfig(UserService userService,
                              SuccessUserHandler successUserHandler,
                              PasswordEncoder passwordEncoder) {
         this.userService = userService;

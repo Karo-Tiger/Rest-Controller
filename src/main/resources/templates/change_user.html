@@ -13,7 +13,7 @@
     </form>
 </div>
 
-<h1>Редактирование пользователя</h1>
+<h1>Редактирование пользователя:</h1>
 
 <form th:action="@{/admin/update(id=${user.id})}" th:object="${user}" method="post">
 
@@ -34,10 +34,17 @@
 
     <p>
         Роли:
-        <label><input type="checkbox" name="roles" th:value="${1}"
-                      th:checked="${user.roles.?[role == 'ROLE_ADMIN'] != null}"/> ADMIN</label>
-        <label><input type="checkbox" name="roles" th:value="${2}"
-                      th:checked="${user.roles.?[role == 'ROLE_USER'] != null}"/> USER</label>
+        <label>
+            <input type="checkbox" name="roles" th:value="${1}"
+                   th:checked="${user.roles.?[role == 'ROLE_ADMIN'] != null}" />
+            ADMIN
+        </label>
+
+        <label>
+            <input type="checkbox" name="roles" th:value="${2}"
+                   th:checked="${user.roles.?[role == 'ROLE_USER'] != null}" />
+            USER
+        </label>
     </p>
 
     <button type="submit">Сохранить</button>

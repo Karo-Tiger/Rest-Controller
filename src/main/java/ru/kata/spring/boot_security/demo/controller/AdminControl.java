@@ -6,6 +6,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.servis.UserService;
+
+import java.util.List;
+
 @Controller
 @RequestMapping("/admin")
 public class AdminControl {
@@ -18,7 +21,7 @@ public class AdminControl {
 
     @GetMapping()
     public String index(Model model) {
-        model.addAttribute("user", userService.findAll());
+        model.addAttribute("users", userService.findAll());
         return "list_of_users";
     }
 
@@ -34,7 +37,7 @@ public class AdminControl {
         return "adding_new_user";
     }
 
-    @PostMapping
+    @PostMapping("/admin")
     public String addpersons(@ModelAttribute("user") User user) {
         userService.createUser(user);
         return "redirect:/admin";

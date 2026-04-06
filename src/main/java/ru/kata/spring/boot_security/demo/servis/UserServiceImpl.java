@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;;
+import ru.kata.spring.boot_security.demo.ripository.RoleRepository;
 import ru.kata.spring.boot_security.demo.ripository.UserRepository;
 
 import javax.transaction.Transactional;
@@ -18,20 +19,25 @@ import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService {
+
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(
-            UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository,
+                           RoleRepository roleRepository,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Override
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
-        return userRepository.findByUsername(username).orElseThrow(
-                () -> new UsernameNotFoundException("User not found"));
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     @Override
@@ -41,29 +47,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User findById(Long id) {
-        return userRepository.findById(id).orElseThrow(
-                () -> new UsernameNotFoundException("User not found"));
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
+    // ✅ СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО)
     @Transactional
     @Override
     public User createUser(User user) {
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        Set<Role> roles = user.getRoles();
-        Set<Role> roleSet = new HashSet<>();
-
-        if (roles != null) {
-            for (Role role : roles) {
-                if (role != null) {
-                    roleSet.add(role);
-                }
-            }
-        }
-        user.setRoles(roleSet);
-
         return userRepository.save(user);
     }
+
     @Override
     public User getInfo() {
         Authentication authentication =
@@ -76,20 +72,37 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    // ✅ ОБНОВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО)
     @Override
     public void updateUser(Long id, User user) {
-        String password = user.getPassword();
-        if (password.trim().isEmpty()) {
-            password =
-                    userRepository.findById(id)
-                            .orElseThrow(
-                                    () -> new UsernameNotFoundException("User not found"))
-                            .getPassword();
 
-            user.setPassword(password);
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // 🔐 пароль
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            user.setPassword(existingUser.getPassword());
         } else {
-            user.setPassword(passwordEncoder.encode(password));
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
+
+        // ✅ роли (ВАЖНО!)
+        Set<Role> rolesFromForm = user.getRoles();
+        Set<Role> rolesFromDb = new HashSet<>();
+
+        if (rolesFromForm != null) {
+            for (Role role : rolesFromForm) {
+                if (role.getId() != null) {
+                    Role dbRole = roleRepository.findById(role.getId())
+                            .orElseThrow(() -> new RuntimeException("Role not found"));
+                    rolesFromDb.add(dbRole);
+                }
+            }
+        }
+
+        user.setRoles(rolesFromDb);
+
+        user.setId(id); // важно!
         userRepository.save(user);
     }
 
