@@ -9,13 +9,16 @@ import ru.kata.spring.boot_security.demo.ripository.UserRepository;
 
 import javax.annotation.PostConstruct;
 import java.util.Set;
+
 @Component
 public class Init {
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public Init(UserRepository userRepository, RoleRepository roleRepository,
+    public Init(UserRepository userRepository,
+                RoleRepository roleRepository,
                 PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -24,30 +27,38 @@ public class Init {
 
     @PostConstruct
     public void init() {
-        Role userRole =
-                roleRepository.findByRole("ROLE_USER")
-                        .orElseGet(() -> roleRepository.save(new Role("ROLE_USER")));
+        // Создаем роли, если их нет
+        Role userRole = roleRepository.findByRole("ROLE_USER")
+                .orElseGet(() -> roleRepository.save(new Role("ROLE_USER")));
 
-        Role adminRole =
-                roleRepository.findByRole("ROLE_ADMIN")
-                        .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN")));
+        Role adminRole = roleRepository.findByRole("ROLE_ADMIN")
+                .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN")));
 
-        if (userRepository.findByUsername("user").isEmpty()) {
-            User user = new User();
-            user.setUsername("user");
-            user.setPassword(passwordEncoder.encode("user"));
+        // Создаем пользователя "user", если его нет
+        if (userRepository.findByEmail("user@example.com").isEmpty()) {
+            User user = new User("user",
+                    passwordEncoder.encode("user"),
+                    "user@example.com"); // обязательное поле email
             user.setRoles(Set.of(userRole));
-
             userRepository.save(user);
         }
 
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            User admin = new User();
-            admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin"));
+        // Создаем пользователя "admin", если его нет
+        if (userRepository.findByEmail("admin@example.com").isEmpty()) {
+            User admin = new User("admin",
+                    passwordEncoder.encode("admin"),
+                    "admin@example.com"); // обязательное поле email
             admin.setRoles(Set.of(userRole, adminRole));
-
             userRepository.save(admin);
         }
+    }
+    @PostConstruct
+    public void init2() {
+
+        String raw = "user";
+        String encoded = passwordEncoder.encode(raw);
+
+        System.out.println("ENCODED PASSWORD TEST: " + encoded);
+        System.out.println("MATCH TEST: " + passwordEncoder.matches("user", encoded));
     }
 }

@@ -20,8 +20,9 @@
     <div class="row justify-content-center" style="margin-top: 80px;">
         <div class="col-md-4">
 
-            <form th:action="@{/login}" method="post" class="text-center">
+            <form th:action="@{/login}" method="post">
 
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <h3 class="mb-4">Please sign in</h3>
 
                 <!-- Ошибка -->
@@ -55,6 +56,3 @@
 </div>
 
 </body>
-</html>
-
-

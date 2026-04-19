@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;;
+import ru.kata.spring.boot_security.demo.model.UserDto;
 import ru.kata.spring.boot_security.demo.ripository.RoleRepository;
 import ru.kata.spring.boot_security.demo.ripository.UserRepository;
 
@@ -34,12 +35,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username)
-            throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
+    @Transactional
+    public UserDetails loadUserByUsername(String input) {
 
+        System.out.println("🔥 LOAD USER BY: " + input);
+
+        User user = userRepository.findByEmail(input)
+                .orElseGet(() -> userRepository.findByUsername(input)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found")));
+
+        // 🔥 ВАЖНО: принудительная инициализация ролей
+        user.getRoles().size();
+
+        System.out.println("USER FOUND: " + user.getUsername());
+        System.out.println("ROLES: " + user.getRoles());
+
+        return user;
+    }
     @Override
     public List<User> findAll() {
         return userRepository.findAll();
@@ -52,12 +64,28 @@ public class UserServiceImpl implements UserService {
     }
 
     // ✅ СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО)
-    @Transactional
     @Override
+    @Transactional
     public User createUser(User user) {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            Role defaultRole = roleRepository.findByRole("ROLE_USER")
+                    .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
+            user.setRoles(Set.of(defaultRole));
+        }
+
         return userRepository.save(user);
+    }
+
+    @Override
+    public Role findRoleById(Long id) {
+        return roleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+    }
+    @Override
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
     }
 
     @Override
@@ -74,35 +102,27 @@ public class UserServiceImpl implements UserService {
 
     // ✅ ОБНОВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО)
     @Override
-    public void updateUser(Long id, User user) {
+    public void updateUser(Long id, UserDto uzer) {
 
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findById(uzer.getId())
+                .orElseThrow();
 
-        // 🔐 пароль
-        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
-            user.setPassword(existingUser.getPassword());
-        } else {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setUsername(uzer.getUsername());
+        user.setEmail(uzer.getEmail());
+
+        if (user.getPassword() != null && !uzer.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(uzer.getPassword()));
         }
 
-        // ✅ роли (ВАЖНО!)
-        Set<Role> rolesFromForm = user.getRoles();
-        Set<Role> rolesFromDb = new HashSet<>();
+        user.setRoles(
+                new HashSet<>(
+                        roleRepository.findAllById(
+                                uzer.getRoleIds() == null ? List.of() : uzer.getRoleIds()
+                        )
+                )
+        );
 
-        if (rolesFromForm != null) {
-            for (Role role : rolesFromForm) {
-                if (role.getId() != null) {
-                    Role dbRole = roleRepository.findById(role.getId())
-                            .orElseThrow(() -> new RuntimeException("Role not found"));
-                    rolesFromDb.add(dbRole);
-                }
-            }
-        }
 
-        user.setRoles(rolesFromDb);
-
-        user.setId(id); // важно!
         userRepository.save(user);
     }
 
