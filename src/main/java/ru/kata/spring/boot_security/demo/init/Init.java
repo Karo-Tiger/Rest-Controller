@@ -27,38 +27,30 @@ public class Init {
 
     @PostConstruct
     public void init() {
-        // Создаем роли, если их нет
         Role userRole = roleRepository.findByRole("ROLE_USER")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_USER")));
 
         Role adminRole = roleRepository.findByRole("ROLE_ADMIN")
                 .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN")));
 
-        // Создаем пользователя "user", если его нет
         if (userRepository.findByEmail("user@example.com").isEmpty()) {
-            User user = new User("user",
+            User user = new User(
+                    "user",
                     passwordEncoder.encode("user"),
-                    "user@example.com"); // обязательное поле email
+                    "user@example.com"
+            );
             user.setRoles(Set.of(userRole));
             userRepository.save(user);
         }
 
-        // Создаем пользователя "admin", если его нет
         if (userRepository.findByEmail("admin@example.com").isEmpty()) {
-            User admin = new User("admin",
+            User admin = new User(
+                    "admin",
                     passwordEncoder.encode("admin"),
-                    "admin@example.com"); // обязательное поле email
+                    "admin@example.com"
+            );
             admin.setRoles(Set.of(userRole, adminRole));
             userRepository.save(admin);
         }
-    }
-    @PostConstruct
-    public void init2() {
-
-        String raw = "user";
-        String encoded = passwordEncoder.encode(raw);
-
-        System.out.println("ENCODED PASSWORD TEST: " + encoded);
-        System.out.println("MATCH TEST: " + passwordEncoder.matches("user", encoded));
     }
 }

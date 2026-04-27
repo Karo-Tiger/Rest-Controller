@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+</head>
+<body>
+
+<h1>Admin Panel</h1>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Edit</th>
+        <th>Delete</th>
+    </tr>
+    </thead>
+    <tbody id="usersTable"></tbody>
+</table>
+
+<hr>
+
+<h3>Create user</h3>
+<input id="username" placeholder="username"><br>
+<input id="email" placeholder="email"><br>
+<input id="password" type="password" placeholder="password"><br>
+<select id="roles" multiple size="2"></select><br><br>
+<button onclick="createUser()">Create</button>
+
+<hr>
+
+<h3>Edit user</h3>
+<input id="editId" type="hidden">
+<input id="editUsername" placeholder="username"><br>
+<input id="editEmail" placeholder="email"><br>
+<input id="editPassword" type="password" placeholder="new password"><br>
+<select id="editRoles" multiple size="2"></select><br><br>
+<button onclick="updateUser()">Update</button>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

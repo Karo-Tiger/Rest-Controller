@@ -4,28 +4,32 @@ import java.util.List;
 
 public class UserDto {
     private Long id;
-
     private String username;
-
     private String password;
-
     private String email;
 
+    // для отображения на frontend
+    private List<String> roles;
 
+    // для create/update
     private List<Long> roleIds;
 
     public UserDto() {
     }
 
-    public UserDto(Long id, String username, String password, String email, List<Long> roleIds) {
+    public UserDto(Long id,
+                   String username,
+                   String password,
+                   String email,
+                   List<String> roles,
+                   List<Long> roleIds) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.email = email;
+        this.roles = roles;
         this.roleIds = roleIds;
     }
-
-    // ===== Getters & Setters =====
 
     public Long getId() {
         return id;
@@ -55,8 +59,16 @@ public class UserDto {
         return email;
     }
 
+    public List<String> getRoles() {
+        return roles;
+    }
+
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public List<Long> getRoleIds() {
@@ -67,4 +79,3 @@ public class UserDto {
         this.roleIds = roleIds;
     }
 }
-

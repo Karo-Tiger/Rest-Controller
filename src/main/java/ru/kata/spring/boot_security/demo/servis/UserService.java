@@ -8,25 +8,20 @@ import ru.kata.spring.boot_security.demo.model.UserDto;
 
 import java.util.List;
 
-
 public interface UserService extends UserDetailsService {
+    List<UserDto> findAllDto();
 
-    List<User> findAll();
+    UserDto findDtoById(Long id);
 
-    User findById(Long id);
+    void createUser(UserDto dto);
 
-    User createUser(User user);
+    void updateUser(Long id, UserDto dto);
 
-    User getInfo();
-
-    void save(User user);
-    Role findRoleById(Long id);
+    void delete(Long id);
 
     List<Role> getAllRoles();
 
+    Role findRoleById(Long id);
 
-    // ✅ ОБНОВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО)
-    void updateUser(Long id, UserDto uzer);
-
-    void delete(Long id);
+    UserDto getCurrentUserDto();
 }

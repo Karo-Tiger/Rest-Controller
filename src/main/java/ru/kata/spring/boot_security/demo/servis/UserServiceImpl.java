@@ -1,6 +1,6 @@
 package ru.kata.spring.boot_security.demo.servis;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,122 +12,108 @@ import ru.kata.spring.boot_security.demo.model.User;;
 import ru.kata.spring.boot_security.demo.model.UserDto;
 import ru.kata.spring.boot_security.demo.ripository.RoleRepository;
 import ru.kata.spring.boot_security.demo.ripository.UserRepository;
+import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public UserServiceImpl(UserRepository userRepository,
-                           RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
+    @Override
+    public List<UserDto> findAllDto() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional
-    public UserDetails loadUserByUsername(String input) {
-
-        System.out.println("🔥 LOAD USER BY: " + input);
-
-        User user = userRepository.findByEmail(input)
-                .orElseGet(() -> userRepository.findByUsername(input)
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found")));
-
-        // 🔥 ВАЖНО: принудительная инициализация ролей
-        user.getRoles().size();
-
-        System.out.println("USER FOUND: " + user.getUsername());
-        System.out.println("ROLES: " + user.getRoles());
-
-        return user;
-    }
-    @Override
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public UserDto findDtoById(Long id) {
+        return toDto(findByIdEntity(id));
     }
 
     @Override
-    public User findById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
-
-    // ✅ СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО)
-    @Override
-    @Transactional
-    public User createUser(User user) {
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            Role defaultRole = roleRepository.findByRole("ROLE_USER")
-                    .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
-            user.setRoles(Set.of(defaultRole));
-        }
-
-        return userRepository.save(user);
-    }
-
-    @Override
-    public Role findRoleById(Long id) {
-        return roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found"));
-    }
-    @Override
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
-    }
-
-    @Override
-    public User getInfo() {
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-        return (User) authentication.getPrincipal();
-    }
-
-    @Override
-    public void save(User user) {
+    public void createUser(UserDto dto) {
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setRoles(mapRoles(dto.getRoleIds()));
         userRepository.save(user);
     }
 
-    // ✅ ОБНОВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ (ИСПРАВЛЕНО)
     @Override
-    public void updateUser(Long id, UserDto uzer) {
+    public void updateUser(Long id, UserDto dto) {
+        User user = findByIdEntity(id);
 
-        User user = userRepository.findById(uzer.getId())
-                .orElseThrow();
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
 
-        user.setUsername(uzer.getUsername());
-        user.setEmail(uzer.getEmail());
-
-        if (user.getPassword() != null && !uzer.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(uzer.getPassword()));
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        user.setRoles(
-                new HashSet<>(
-                        roleRepository.findAllById(
-                                uzer.getRoleIds() == null ? List.of() : uzer.getRoleIds()
-                        )
-                )
-        );
-
-
+        user.setRoles(mapRoles(dto.getRoleIds()));
         userRepository.save(user);
     }
 
     @Override
     public void delete(Long id) {
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
+    }
+
+    @Override
+    public Role findRoleById(Long id) {
+        return roleRepository.findById(id).orElseThrow();
+    }
+
+    @Override
+    public UserDto getCurrentUserDto() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !(auth.getPrincipal() instanceof User user)) {
+            throw new RuntimeException("Not authenticated");
+        }
+
+        return toDto(user);
+    }
+
+    private User findByIdEntity(Long id) {
+        return userRepository.findById(id).orElseThrow();
+    }
+
+    private Set<Role> mapRoles(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new HashSet<>();
+        }
+        return new HashSet<>(roleRepository.findAllById(ids));
+    }
+
+    private UserDto toDto(User user) {
+        return new UserDto(
+                user.getId(),
+                user.getUsername(),
+                null,
+                user.getEmail(),
+                user.getRoles().stream().map(Role::getRole).collect(Collectors.toList()),
+                user.getRoles().stream().map(Role::getId).collect(Collectors.toList())
+        );
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 }

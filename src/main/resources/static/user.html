@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>User Page</title>
+</head>
+<body>
+
+<h1>User Page</h1>
+
+<div id="me"></div>
+
+<script>
+    async function loadMe() {
+        const res = await fetch("/api/user/me", {
+            credentials: "include"
+        });
+
+        if (!res.ok) {
+            document.getElementById("me").innerHTML = "<p>Not authenticated</p>";
+            return;
+        }
+
+        const user = await res.json();
+
+        document.getElementById("me").innerHTML = `
+            <p><b>ID:</b> ${user.id}</p>
+            <p><b>Username:</b> ${user.username}</p>
+            <p><b>Email:</b> ${user.email}</p>
+            <p><b>Roles:</b> ${user.roles.join(", ")}</p>
+        `;
+    }
+
+    loadMe();
+</script>
+
+</body>
+</html>
