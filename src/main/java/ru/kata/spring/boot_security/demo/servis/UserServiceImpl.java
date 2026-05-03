@@ -8,11 +8,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.kata.spring.boot_security.demo.model.Role;
-import ru.kata.spring.boot_security.demo.model.User;;
+import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.model.UserDto;
 import ru.kata.spring.boot_security.demo.ripository.RoleRepository;
 import ru.kata.spring.boot_security.demo.ripository.UserRepository;
-import java.util.stream.Collectors;
+
 
 import java.util.HashSet;
 import java.util.List;
@@ -24,25 +24,21 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Override
     public List<UserDto> findAllDto() {
-        return userRepository.findAll()
-                .stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        return userMapper.toDtoList(userRepository.findAll());
     }
 
     @Override
     public UserDto findDtoById(Long id) {
-        return toDto(findByIdEntity(id));
+        return userMapper.toDto(findByIdEntity(id));
     }
 
     @Override
     public void createUser(UserDto dto) {
-        User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setEmail(dto.getEmail());
+        User user = userMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRoles(mapRoles(dto.getRoleIds()));
         userRepository.save(user);
@@ -82,11 +78,12 @@ public class UserServiceImpl implements UserService {
     public UserDto getCurrentUserDto() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || !(auth.getPrincipal() instanceof User user)) {
+        if (auth == null || !(auth.getPrincipal() instanceof User)) {
             throw new RuntimeException("Not authenticated");
         }
 
-        return toDto(user);
+        User user = (User) auth.getPrincipal();
+        return userMapper.toDto(user);
     }
 
     private User findByIdEntity(Long id) {
@@ -98,17 +95,6 @@ public class UserServiceImpl implements UserService {
             return new HashSet<>();
         }
         return new HashSet<>(roleRepository.findAllById(ids));
-    }
-
-    private UserDto toDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getUsername(),
-                null,
-                user.getEmail(),
-                user.getRoles().stream().map(Role::getRole).collect(Collectors.toList()),
-                user.getRoles().stream().map(Role::getId).collect(Collectors.toList())
-        );
     }
 
     @Override
